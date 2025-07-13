@@ -1548,10 +1548,22 @@ function calculateAQI(pollutants) {
     // Use the higher of weighted average or maximum individual AQI
     const finalAQI = Math.max(totalWeightedAQI, maxIndividualAQI);
     
+    const values = Object.values(pollutants);
+const mean = values.reduce((a, b) => a + b, 0) / values.length;
+const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+const stdDev = Math.sqrt(variance);
+
+// Compute confidence inversely proportional to spread
+let rawConfidence = 95 - (stdDev / mean) * 10;
+rawConfidence = Math.max(75, Math.min(95, rawConfidence));
+
+// Keep within sensible range
+rawConfidence = Math.max(70, Math.min(95, rawConfidence));
+
     return {
         aqi: Math.round(finalAQI),
         dominantPollutant: dominantPollutant,
-        confidence: Math.min(95, 70 + (Object.keys(pollutants).length * 5))
+        confidence: Math.round(rawConfidence)
     };
 }
 
